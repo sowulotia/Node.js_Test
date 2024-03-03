@@ -34,44 +34,32 @@ class BinaryUtil{
 		}
 		return Methods[type];
 	}
+	
+	num2bin(values, type='int32', endian='le'){
+		let method_info = this.get_method_info(type, endian);
+		let bufferSize = method_info.size;
+		let method_name = 'write' + method_info.method;
 
-	num2bin(value, type='int32', endian='le'){
-		if(Array.isArray(value)){
-			return this.num2bin_list(value, type, endian);
+		if(!bufferSize){
+			throw new Error('Type Error')
+		}
+
+		// Check values is number or list. Here, Method only use the list of number
+		let num_list;
+		if (Array.isArray(values)){
+			num_list = values;
+		}
+		else if(values instanceof Buffer){
+			throw new Error('No support values type Error');
 		}
 		else{
-			return this.num2bin_single(value, type, endian);
-		}
-	}
-
-	num2bin_single(value, type='int32', endian='le'){
-		let method_info = this.get_method_info(type, endian);
-		let bufferSize = method_info.size;
-		let method_name = 'write' + method_info.method;
-
-		if(!bufferSize){
-			throw new Error('Type Error')
+			num_list = [values];
 		}
 
-		const totalBufferSize = 1 * bufferSize;
+		const totalBufferSize = num_list.length * bufferSize;
   		const buffer = Buffer.allocUnsafe(totalBufferSize);
-		buffer[method_name](value, 0);
-
-		return buffer;
-	}
-	num2bin_list(values, type='int32', endian='le'){
-		let method_info = this.get_method_info(type, endian);
-		let bufferSize = method_info.size;
-		let method_name = 'write' + method_info.method;
-
-		if(!bufferSize){
-			throw new Error('Type Error')
-		}
-
-		const totalBufferSize = values.length * bufferSize;
-  		const buffer = Buffer.allocUnsafe(totalBufferSize);
-		for (let i = 0; i < values.length; i++) {
-			buffer[method_name](values[i], i * bufferSize);
+		for (let i = 0; i < num_list.length; i++) {
+			buffer[method_name](num_list[i], i * bufferSize);
 		}
 
 		return buffer;
